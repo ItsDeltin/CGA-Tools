@@ -4,6 +4,7 @@ using System.Drawing.Imaging;
 using System.Windows.Forms;
 using System.Threading;
 using System.Diagnostics;
+using System.IO;
 
 namespace CursorChecker
 {
@@ -11,13 +12,25 @@ namespace CursorChecker
     {
         static void Main(string[] args)
         {
-            Bitmap bmp = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height, PixelFormat.Format32bppArgb);
-            string consolewrite = "Press F1 to scan. Press F2 to wait 3 seconds then scan." +
+            string exeLocation = System.Reflection.Assembly.GetEntryAssembly().Location;
+            string exeDirectory = Path.GetDirectoryName(exeLocation) + Path.DirectorySeparatorChar;
+            string configLocation = exeDirectory + "ImageEditorLocation.txt";
+            string tempImageLocation = exeDirectory + "image.png";
+
+            string consolewrite = exeLocation +
+                "\nPress F1 to scan. Press F2 to wait 3 seconds then scan." +
+                "\nPress F3 to open the current screen in an image editor." +
                 "\nPress F4 to convert RGB to hex. Press F5 to convert hex to RGB. Type \"back\" while converting to cancel." +
                 "\nPress F6 to clear console.\n";
-            //string imageloc = @"C:\Users\" + Environment.UserName + @"\Documents\Abyxa\Other\Scanimage.png";
-            string format = "Location (X,Y): {0},{1}. Color (R,G,B): {2},{3},{4}. Hex: {5}";
             Console.WriteLine(consolewrite);
+
+            string imageEditorLocation = File.Exists(configLocation) ? File.ReadAllText(exeDirectory + "ImageEditorLocation.txt") : null;
+            if (!File.Exists(imageEditorLocation))
+                imageEditorLocation = null;
+
+            Bitmap bmp = new Bitmap(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height, PixelFormat.Format32bppArgb);
+            string format = "Location (X,Y): {0},{1}. Color (R,G,B): {2},{3},{4}. Hex: {5}";
+
             while (true)
             {
                 var key = Console.ReadKey();
@@ -59,16 +72,17 @@ namespace CursorChecker
                         pixel.B,
                         hex);
                 }
-                /*
                 else if (key.Key == ConsoleKey.F3)
                 {
+                    if (imageEditorLocation == null)
+                        continue;
+
                     Console.SetCursorPosition(0, Console.CursorTop);
-                    Console.WriteLine("Opening GIMP...");
+                    Console.WriteLine("Opening " + imageEditorLocation);
                     Update(ref bmp);
-                    bmp.Save(imageloc);
-                    Process.Start(@"C:\Program Files\GIMP 2\bin\gimp-2.8.exe", imageloc);
+                    bmp.Save(tempImageLocation);
+                    Process.Start(imageEditorLocation, tempImageLocation);
                 }
-                */
                 // RGB to hex
                 else if (key.Key == ConsoleKey.F4)
                 {
